@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -40 1200 900" width="1200" height="900">
+<rect x="-60" y="-40" width="1200" height="900" fill="#ffffff"/>
+<style>text{font-family:ui-sans-serif,-apple-system,Segoe UI,sans-serif}</style>
+<text x="251" y="34.7" font-size="26" fill="#1e1e1e">Acme HR assistant - red team target</text>
+<text x="274" y="67.2" font-size="16" fill="#757575">Green = new build   Blue = exists today   Orange = attacker-writable</text>
+<text x="24" y="109.2" font-size="16" fill="#b91c1c">victim: LLM02, 05, 09</text>
+<rect x="20" y="120" width="150" height="70" rx="10" fill="#a5d8ff" stroke="#4a9eed" stroke-width="2" opacity="1"/>
+<text x="95" y="161.3" font-size="18" fill="#1e1e1e" text-anchor="middle">Employee</text>
+<polyline points="170,155 210,155" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<polygon points="210,155 198.294,160.655 198.294,149.345" fill="#1e1e1e"/>
+<text x="214" y="109.2" font-size="16" fill="#b91c1c">LLM01, 07, 10</text>
+<rect x="210" y="120" width="180" height="70" rx="10" fill="#ffd8a8" stroke="#f59e0b" stroke-width="2" opacity="1"/>
+<text x="300" y="160.95" font-size="17" fill="#1e1e1e" text-anchor="middle">employee prompt</text>
+<polyline points="390,155 430,155" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<polygon points="430,155 418.294,160.655 418.294,149.345" fill="#1e1e1e"/>
+<text x="434" y="109.2" font-size="16" fill="#b91c1c">Agent - LLM06, Lab 7</text>
+<rect x="430" y="120" width="200" height="70" rx="10" fill="#b2f2bb" stroke="#15803d" stroke-width="2" opacity="1"/>
+<text x="530" y="160.95" font-size="17" fill="#1e1e1e" text-anchor="middle">rag_provider.py</text>
+<polyline points="630,155 670,155" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<polygon points="670,155 658.294,160.655 658.294,149.345" fill="#1e1e1e"/>
+<text x="674" y="109.2" font-size="16" fill="#b91c1c">LLM01 indirect, LLM07</text>
+<rect x="670" y="120" width="200" height="70" rx="10" fill="#d0bfff" stroke="#8b5cf6" stroke-width="2" opacity="1"/>
+<text x="770" y="160.6" font-size="16" fill="#1e1e1e" text-anchor="middle">augmented prompt</text>
+<polyline points="870,155 910,155" fill="none" stroke="#1e1e1e" stroke-width="2"/>
+<polygon points="910,155 898.294,160.655 898.294,149.345" fill="#1e1e1e"/>
+<text x="920" y="109.2" font-size="16" fill="#b91c1c">LLM02, 05, 09, 10</text>
+<rect x="910" y="120" width="170" height="70" rx="10" fill="#a5d8ff" stroke="#4a9eed" stroke-width="2" opacity="1"/>
+<text x="995" y="161.3" font-size="18" fill="#1e1e1e" text-anchor="middle">LLM (chat)</text>
+<rect x="430" y="310" width="200" height="70" rx="10" fill="#b2f2bb" stroke="#15803d" stroke-width="2" opacity="1"/>
+<text x="530" y="350.6" font-size="16" fill="#1e1e1e" text-anchor="middle">Chroma vector DB</text>
+<polyline points="470,190 470,310" fill="none" stroke="#4a9eed" stroke-width="2"/>
+<polygon points="470,310 464.345,298.294 475.655,298.294" fill="#4a9eed"/>
+<rect x="450.75" y="239.5" width="38.5" height="21" fill="#ffffff"/>
+<text x="470" y="254.9" font-size="14" fill="#1e1e1e" text-anchor="middle">query</text>
+<polyline points="590,310 590,190" fill="none" stroke="#f59e0b" stroke-width="2"/>
+<polygon points="590,190 595.655,201.706 584.345,201.706" fill="#f59e0b"/>
+<rect x="570.75" y="239.5" width="38.5" height="21" fill="#ffffff"/>
+<text x="590" y="254.9" font-size="14" fill="#1e1e1e" text-anchor="middle">top-k</text>
+<text x="434" y="401.2" font-size="16" fill="#b91c1c">LLM08, LLM02 leak</text>
+<rect x="20" y="310" width="180" height="70" rx="10" fill="#ffd8a8" stroke="#f59e0b" stroke-width="2" opacity="1"/>
+<text x="110" y="350.6" font-size="16" fill="#1e1e1e" text-anchor="middle">HR + procurement</text>
+<text x="24" y="401.2" font-size="16" fill="#b91c1c">LLM01 - vendor PDFs</text>
+<text x="24" y="425.2" font-size="16" fill="#b91c1c">suppliers write here</text>
+<polyline points="200,345 230,345" fill="none" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="9 7"/>
+<polygon points="230,345 218.294,350.655 218.294,339.345" fill="#1e1e1e"/>
+<rect x="230" y="310" width="170" height="70" rx="10" fill="#b2f2bb" stroke="#15803d" stroke-width="2" opacity="1"/>
+<text x="315" y="350.6" font-size="16" fill="#1e1e1e" text-anchor="middle">Embedding model</text>
+<text x="234" y="401.2" font-size="16" fill="#b91c1c">LLM03 digest, LLM08</text>
+<polyline points="400,345 430,345" fill="none" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="9 7"/>
+<polygon points="430,345 418.294,350.655 418.294,339.345" fill="#1e1e1e"/>
+<rect x="380" y="450" width="300" height="80" rx="10" fill="#b2f2bb" stroke="#15803d" stroke-width="2" opacity="1"/>
+<text x="530" y="495.95" font-size="17" fill="#1e1e1e" text-anchor="middle">HR + procurement, one index</text>
+<polyline points="620,450 620,382" fill="none" stroke="#15803d" stroke-width="2"/>
+<polygon points="620,382 625.655,393.706 614.345,393.706" fill="#15803d"/>
+<text x="384" y="553.2" font-size="16" fill="#1e1e1e">employee PII vs vendor pricing</text>
+<text x="384" y="577.2" font-size="16" fill="#b91c1c">cross-domain retrieval - new</text>
+<polyline points="995,190 900,310" fill="none" stroke="#15803d" stroke-width="2"/>
+<polygon points="900,310 902.832,297.312 911.699,304.332" fill="#15803d"/>
+<rect x="924.4" y="239.5" width="46.2" height="21" fill="#ffffff"/>
+<text x="947.5" y="254.9" font-size="14" fill="#1e1e1e" text-anchor="middle">output</text>
+<rect x="700" y="310" width="340" height="80" rx="10" fill="#b2f2bb" stroke="#15803d" stroke-width="2" opacity="1"/>
+<text x="870" y="356.3" font-size="18" fill="#1e1e1e" text-anchor="middle">Renderer harness</text>
+<text x="704" y="413.2" font-size="16" fill="#1e1e1e">renders markdown image -&gt; real HTTP GET</text>
+<text x="704" y="437.2" font-size="16" fill="#b91c1c">LLM05 - proves exfiltration on the wire</text>
+<text x="40" y="657.1" font-size="18" fill="#1e1e1e">What this buys that a chat-only target cannot reach:</text>
+<text x="40" y="683.2" font-size="16" fill="#15803d">real index under test (LLM08)  -  vendor docs as an external write channel (LLM01)</text>
+<text x="40" y="707.2" font-size="16" fill="#15803d">output actually rendered, so exfiltration is evidence not assertion (LLM05)</text>
+</svg>

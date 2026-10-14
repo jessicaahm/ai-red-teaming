@@ -1,0 +1,32 @@
+# promptfoo run artifacts — contain generated attack payloads and model responses
+results*.json
+*.db
+logs/
+redteam.yaml
+.env
+
+# garak run artifacts
+*.report.jsonl
+*.hitlog.jsonl
+*.report.html
+garak_runs/
+
+# local
+.DS_Store
+CLAUDE.local.md
+
+# slide deck working folder — binary .pptx, not reviewable in a diff and large.
+# Trailing slash so it matches the directory only; the repo-root presentation.md,
+# which IS the tracked written deliverable, is unaffected.
+presentation/
+
+# python env and notebook local state
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Chroma persistent store — derived, rebuilt by notebooks/3a.embed-index-canary.ipynb.
+# The `*.db` rule above does NOT match it: the store is chroma.sqlite3 (plus -wal/-shm)
+# and UUID-named subdirs of binary HNSW index files. Ignore the directory, not a pattern.
+notebooks/.chroma/
