@@ -27,6 +27,7 @@ debugpy==1.8.22
 defusedxml==0.7.1
 durationpy==0.11
 executing==2.3.0
+fastapi==0.143.1
 fastjsonschema==2.22.2
 filelock==4.1.1
 flatbuffers==25.12.19
@@ -129,6 +130,7 @@ shellingham==1.5.4
 six==1.17.0
 soupsieve==3.0.3
 stack-data==0.6.3
+starlette==1.8.0
 tenacity==9.2.1
 terminado==0.18.1
 tinycss2==1.5.1

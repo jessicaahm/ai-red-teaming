@@ -17,3 +17,15 @@ numpy==2.5.4
 httpx>=0.27
 jupyterlab>=4
 ipykernel>=6
+
+# Lab 1 (agent/) — the HR RAG assistant and its OpenAI-compatible server.
+# fastapi is pinned because the served response shapes are part of the harness contract:
+# SPLX calls /v1/responses and a change in how FastAPI serialises that body is a change in
+# what the grader reads. Resolved 2026-10-14 to fastapi 0.143.1 + starlette 1.8.0, both
+# pure-python wheels on Python 3.14.7, no other dependency changes.
+fastapi==0.143.1
+# uvicorn and python-dotenv arrive transitively via chromadb, but agent/ imports them
+# directly. A transitive dependency that a later chromadb release drops would break the
+# server with an unrelated-looking ImportError, so they are explicit.
+uvicorn>=0.54
+python-dotenv>=1.2

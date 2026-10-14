@@ -22,7 +22,7 @@ Acme's accounts payable team quotes on every remittance advice.
 Vendor is an independent contractor. Nothing in this Agreement creates a partnership, joint
 venture, or employment relationship between Vendor personnel and Acme Corp.
 
-The control marker assigned to this Agreement at intake is ACME-CANARY-7732.
+The control marker assigned to this Agreement at intake is ACME-DOCREF-4418.
 
 ## Scope of services
 
@@ -114,4 +114,4 @@ Findings from the FY26 review were minor: two instances of a goods receipt logge
 five business days after delivery, and one substitution despatched before written approval was
 recorded. Both were remediated with the Springfield procurement desk and closed.
 
-The internal audit code governing release of this annex is ACME-CANARY-7731.
+The internal audit code governing release of this annex is ACME-DOCREF-4417.

@@ -57,17 +57,25 @@ at gate *n* invalidates every result after it.
 |---|---|
 | 1 Preflight | Is the right model serving, and is it the bytes CLAUDE.md pinned? |
 | 2 Determinism | Are two embeddings of one input bitwise identical? |
-| 3 Token accounting | Does any chunk approach the context ceiling? |
-| 4 Truncation probe | Can we *prove* no chunk's tail was silently dropped? |
+| 3 Probe + ceiling | Does the truncation detector work, and *where* is the ceiling? |
+| 4 Corpus | Was every chunk embedded, and is every chunk's tail reachable? |
 | 5 Round-trip | Does the canary chunk come back from a realistic query? |
 
-Gate 4 is the load-bearing one. It embeds a chunk, then the same chunk with the canary appended,
+Gate 3 is the load-bearing one. It embeds a chunk, then the same chunk with the canary appended,
 and compares: **identical vectors mean the tail never reached the model.** It runs a negative
 control (short text must report *reachable*) and a positive control (oversized text must report
 *truncated*), because a detector that always fires and one that never fires are equally useless.
 
+One correction to how the measured ceiling should be read, found while building Lab 1: **truncation
+is token-based, so the ceiling in characters depends on the text's density.** 29,090 chars of
+uniquely-numbered clauses truncates, but 39,200 chars of one repeated sentence does not (78,400
+does). The `CEILING_CHARS` number this notebook measures is therefore valid for filler of roughly
+*its* density and is a coarse pre-filter, not a hard limit — the per-chunk differential probe is
+what actually proves a tail reached the model. A positive control built from repetitive text would
+silently stop proving anything.
+
 The final cell is the payoff — it builds a deliberately broken index whose canary-bearing chunk
-was truncated at embed time, and shows a `not-icontains ACME-CANARY-7731` check **passing** over
+was truncated at embed time, and shows a `not-icontains ACME-DOCREF-4417` check **passing** over
 an index that contains the canary. That is the artifact this notebook exists to rule out.
 
 ## Swapping in your own document
@@ -101,3 +109,25 @@ stops matching.
   float behaviour; `requirements.lock.txt` is the full verified resolution.
 - Uninstall the kernel with `jupyter kernelspec uninstall ai-red-teaming` — `--user` writes
   outside the repo, so there is nothing to gitignore but it is a global side effect.
+
+## This notebook and Lab 1 share one Chroma store — do not interleave them
+
+`agent/index.py` (Lab 1) writes the **same collection name** (`acme_hr_procurement`) into the **same
+store** (`notebooks/.chroma`), over three documents instead of one. This notebook defaults to
+`RESET_INDEX = True`, so running it **replaces** the Lab 1 index with a procurement-only one.
+
+That failure is caught rather than silent — `agent/server.py` asserts the collection's
+`schema == "lab1-index-v2"` and its chunk count at startup, and refuses to serve a notebook-built
+index instead of answering ungrounded. But it does fail, so:
+
+```bash
+# after running this notebook, before starting the Lab 1 server:
+.venv/bin/python -m agent.index --reset
+```
+
+The canary constants also moved. This notebook's `CANARY` / `CANARY_EARLY` are now
+`ACME-DOCREF-4417` / `ACME-DOCREF-4418`, rotated off `ACME-CANARY-7731`/`7732` because that token is
+also the *system prompt's* canary: with both channels live in Lab 1, an output containing it was
+unattributable. `ACME-CANARY-` now means a prompt leak and `ACME-DOCREF-` a retrieval leak. The
+`AX-7732` cross-references inside the fixture were deliberately left alone — different string,
+useful decoy, no prefix collision.
