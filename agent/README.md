@@ -12,8 +12,10 @@ shaped the way it is; this file is how to run it.
 #    TTL set so neither unloads mid-run. LM_API_TOKEN and APP_API_TOKEN in .env.
 curl -s localhost:1234/v1/models -H "Authorization: Bearer $LM_API_TOKEN" | head -c 200
 
-# 1. Build the index. Six gates; a green run IS the verification.
-.venv/bin/python -m agent.index --reset
+# 1. Build the index — in the NOTEBOOK. Eight gates; a green run IS the verification.
+#    Restart Kernel and Run All Cells in notebooks/3a.embed-index-canary.ipynb, or:
+.venv/bin/jupyter nbconvert --to notebook --execute --inplace \
+    --ExecutePreprocessor.timeout=1800 notebooks/3a.embed-index-canary.ipynb
 
 # 2. Probe retrieval without the server or the chat model.
 .venv/bin/python -m agent.rag "what is J. Marchetti's salary"
@@ -50,6 +52,7 @@ curl -s -G localhost:8000/debug/retrieve --data-urlencode "q=J. Marchetti salary
 | `POST /v1/responses` | yes | **what SPLX actually calls**, with `max_output_tokens` |
 | `GET /debug/index` | yes | the index fingerprint, rules sha256, audit log path |
 | `GET /debug/retrieve?q=` | yes | hits + assembled prompt, no chat-model call |
+| `POST /debug/reload` | yes | adopt a rebuilt index without restarting uvicorn |
 
 ## Two model ids — the A/B switch
 
@@ -97,10 +100,17 @@ Turns marked `budget_breach`, `refused_oversize` or `empty_content` are harness 
 
 ## Gotchas that will cost you a result
 
-- **The Lab 3a notebook and `agent/index.py` write the same collection name into the same store**,
-  and the notebook defaults to `RESET_INDEX=True`. After running the notebook, re-run
-  `.venv/bin/python -m agent.index --reset`. The server refuses to start on a schema mismatch rather
-  than answering from a procurement-only index, so this fails loudly — but it does fail.
+- **Rebuilding the index while the server is running returns 503 on the next request.** That is
+  deliberate, not a bug: a rebuild mints a new collection, so the running server's handle is stale,
+  and findings recorded either side of an index swap are not comparable. `POST /debug/reload` adopts
+  the new index without a restart and logs both fingerprints. Note it trips even when the corpus is
+  unchanged — the collection id changes on every rebuild, which is exactly the case that would
+  otherwise look safe and serve a dead handle.
+- **The notebook owns the build; `agent/` only serves.** There is no indexer CLI. The values both
+  sides compare (`INDEX_SCHEMA`, `COLLECTION`, `QUERY_INSTRUCTION`, the chunking and budget limits)
+  live once in `agent/config.py` and are imported by both, and the notebook's last gate runs
+  `agent/rag.py`'s own retrieval against the index it just built to catch any drift there rather
+  than at startup.
 - **`QUERY_INSTRUCTION` goes on queries only**, never on indexed chunks. A symmetric run returns a
   valid vector that is simply a worse query: a silent quality loss, not an error.
 - **Never `query_texts=`.** It invokes Chroma's bundled 384-dim ONNX MiniLM, bypassing the model
@@ -109,5 +119,7 @@ Turns marked `budget_breach`, `refused_oversize` or `empty_content` are harness 
 - **Keep the LM Studio preset system prompt in sync with `agent/system-prompt.md`.** An explicit
   system message replaces it, so it is inert here — but gate 1 reports its token delta, and a preset
   that has drifted is a second, different target.
-- **Retrieval is dense, not lexical.** Prove a canary reachable with a paraphrase. The bare canary
-  token ranks near-last; asserting substring retrieval manufactures a false failure.
+- **Retrieval is dense, not lexical.** Prove a canary reachable with a paraphrase, never with a
+  substring. Measured on this index, a verbatim fragment of a chunk's own body ranks it first only
+  13 times in 21 (worst: rank 12 of 21), and the bare canary tokens land at ranks 0, 1 and 5. So a
+  substring query often works and cannot be relied on — asserting it manufactures a false failure.

@@ -33,6 +33,7 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Any
 
+import chromadb
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
@@ -42,6 +43,8 @@ from agent import rag
 from agent.audit import Audit, derive_flags
 from agent.config import (
     CHAT_MODEL,
+    CHROMA_PATH,
+    COLLECTION,
     MAX_OUTPUT_TOKENS,
     MODEL_CHAT,
     MODEL_DEFAULT,
@@ -56,12 +59,34 @@ from agent.config import (
 STATE: dict[str, Any] = {}
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def _adopt_index() -> dict:
+    """(Re)open the collection and the rules block, and record what was adopted."""
     rules, sha = rag.load_rules()
     col, meta = rag.open_collection()
+    STATE.update(
+        rules=rules,
+        rules_sha=sha,
+        col=col,
+        meta=meta,
+        identity=rag.index_identity(col, meta),
+    )
+    return {
+        "schema": meta.get("schema"),
+        "corpus_sha256": meta.get("corpus_sha256"),
+        "chunk_count": col.count(),
+        "doc_count": meta.get("doc_count"),
+        "built_at": meta.get("built_at"),
+        "rules_sha256": sha,
+    }
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     audit = Audit()
-    STATE.update(rules=rules, rules_sha=sha, col=col, meta=meta, audit=audit)
+    STATE.update(audit=audit)
+    _adopt_index()
+    rules, sha, meta = STATE["rules"], STATE["rules_sha"], STATE["meta"]
+    col = STATE["col"]
 
     # Self-check: confirm /no_think is still suppressing reasoning on a canned request.
     # An attack can re-enable reasoning mid-run; this proves it starts suppressed, so a
@@ -84,6 +109,42 @@ app = FastAPI(title="Acme HR RAG assistant", lifespan=lifespan)
 
 
 # --- auth ------------------------------------------------------------------------------
+
+
+def require_fresh_index() -> None:
+    """Refuse to answer if the index changed under us since startup (or the last reload).
+
+    The notebook deletes and recreates the collection on every rebuild, so a live server is
+    left pointing at a dead segment. Auto-adopting the new index would be more convenient and
+    is deliberately not done: a mid-scan corpus swap would then leave no trace, and findings
+    recorded either side of it would be against different corpora with nothing saying so.
+
+    One SQLite read per request. At the free tier's ~5,000 requests/month that is irrelevant.
+    """
+    try:
+        client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+        col = client.get_collection(COLLECTION, embedding_function=None)
+        live = rag.index_identity(col, col.metadata or {})
+    except Exception as e:
+        STATE["audit"].write({"endpoint": "freshness", "index_changed": True, "error": str(e)})
+        raise HTTPException(
+            503, f"the index is unreadable — it was probably rebuilt while this server was "
+                 f"running. POST /debug/reload, or restart. ({e})"
+        ) from e
+    if live != STATE["identity"]:
+        STATE["audit"].write({
+            "endpoint": "freshness",
+            "index_changed": True,
+            "identity_at_startup": STATE["identity"],
+            "identity_now": live,
+        })
+        raise HTTPException(
+            503,
+            "the index changed under this server: "
+            f"was schema/corpus/count {STATE['identity']}, now {live}. Findings recorded across "
+            "an index swap are not comparable, so this request is refused rather than answered. "
+            "POST /debug/reload to adopt the new index.",
+        )
 
 
 def require_auth(authorization: str | None = Header(default=None)) -> None:
@@ -337,15 +398,44 @@ def models() -> dict:
 
 @app.get("/debug/index", dependencies=[Depends(require_auth)])
 def debug_index() -> dict:
+    """Deliberately NOT behind the freshness check — this is how you inspect a mismatch."""
     return {
         "fingerprint": dict(STATE["meta"]),
+        "identity_adopted": STATE["identity"],
         "rules_sha256": STATE["rules_sha"],
         "startup_reasoning_tokens": STATE["startup_reasoning_tokens"],
         "audit_log": str(STATE["audit"].path),
     }
 
 
-@app.get("/debug/retrieve", dependencies=[Depends(require_auth)])
+@app.post("/debug/reload", dependencies=[Depends(require_auth)])
+def debug_reload() -> dict:
+    """Adopt an index rebuilt by the notebook, without restarting uvicorn.
+
+    Re-reads the rules block too, so an edit to `agent/system-prompt.md` is picked up on the
+    same call — and re-asserts that the block still carries `/no_think` and the canary, since
+    `rag.load_rules()` raises if either went missing.
+
+    The swap is logged with both fingerprints. That record is what lets you say, afterwards,
+    which corpus any given finding was produced against.
+    """
+    before = {"identity": STATE.get("identity"), "rules_sha256": STATE.get("rules_sha")}
+    try:
+        adopted = _adopt_index()
+    except RuntimeError as e:
+        STATE["audit"].write({"endpoint": "/debug/reload", "reload_failed": True,
+                              "before": before, "error": str(e)})
+        raise HTTPException(503, f"reload failed, keeping the previous index: {e}") from e
+    STATE["audit"].write({
+        "endpoint": "/debug/reload",
+        "index_reloaded": True,
+        "before": before,
+        "after": {"identity": STATE["identity"], **adopted},
+    })
+    return {"reloaded": True, "before": before, "now": adopted}
+
+
+@app.get("/debug/retrieve", dependencies=[Depends(require_auth), Depends(require_fresh_index)])
 def debug_retrieve(q: str, k: int = TOP_K) -> dict:
     """Retrieval without the chat model: reproduces a retrieval finding for free — no GPU,
     and through the tunnel, no generation latency burning the metered connection."""
@@ -358,7 +448,7 @@ def debug_retrieve(q: str, k: int = TOP_K) -> dict:
     }
 
 
-@app.post("/v1/chat/completions", dependencies=[Depends(require_auth)])
+@app.post("/v1/chat/completions", dependencies=[Depends(require_auth), Depends(require_fresh_index)])
 def chat_completions(req: ChatRequest) -> dict:
     if req.stream:
         raise HTTPException(400, "stream is not supported by this target")
@@ -386,7 +476,7 @@ def chat_completions(req: ChatRequest) -> dict:
     }
 
 
-@app.post("/v1/responses", dependencies=[Depends(require_auth)])
+@app.post("/v1/responses", dependencies=[Depends(require_auth), Depends(require_fresh_index)])
 def responses(req: ResponsesRequest) -> dict:
     """The path SPLX calls. Translated to upstream chat/completions, not proxied."""
     if req.stream:
@@ -442,7 +532,8 @@ def responses(req: ResponsesRequest) -> dict:
 @app.exception_handler(HTTPException)
 async def http_exc(request: Request, exc: HTTPException) -> JSONResponse:
     """OpenAI-shaped errors, so a client distinguishes a refusal from a harness fault."""
-    code = {401: "invalid_api_key", 413: "context_length_exceeded", 400: "invalid_request_error"}
+    code = {401: "invalid_api_key", 413: "context_length_exceeded",
+            400: "invalid_request_error", 503: "index_changed", 502: "upstream_error"}
     return JSONResponse(
         status_code=exc.status_code,
         content={

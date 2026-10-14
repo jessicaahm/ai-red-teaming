@@ -78,35 +78,57 @@ def load_rules() -> tuple[str, str]:
 # --- the collection --------------------------------------------------------------------
 
 
+REBUILD_HINT = (
+    "Rebuild it: open notebooks/3a.embed-index-canary.ipynb and Restart Kernel and Run All "
+    "Cells. That notebook is the only writer of this collection."
+)
+
+
 def open_collection():
     """Open the index read-only and refuse a collection this app did not build.
 
-    `agent/index.py` and the Lab 3a notebook write the SAME collection name into the SAME
-    store, and the notebook defaults to RESET_INDEX=True. Without this check, a notebook
-    re-run would leave the server quietly answering from an 8-chunk, procurement-only,
-    v1-fingerprint index. Loud refusal beats ungrounded answers.
+    The notebook writes the fingerprint and this function checks it — two authors of one
+    contract, with only `agent/config.py`'s shared constants holding them together. So the
+    check is deliberately strict: a schema or count mismatch means the index on disk is not
+    the one this code was written against, and a loud refusal beats ungrounded answers.
     """
     client = chromadb.PersistentClient(path=str(CHROMA_PATH))
     try:
         col = client.get_collection(COLLECTION, embedding_function=None)
     except Exception as e:
         raise RuntimeError(
-            f"collection '{COLLECTION}' not found in {CHROMA_PATH}. "
-            "Run `.venv/bin/python -m agent.index --reset`."
+            f"collection '{COLLECTION}' not found in {CHROMA_PATH}. {REBUILD_HINT}"
         ) from e
     meta = col.metadata or {}
     if meta.get("schema") != INDEX_SCHEMA:
         raise RuntimeError(
             f"collection '{COLLECTION}' has schema {meta.get('schema')!r}, expected "
-            f"{INDEX_SCHEMA!r} — it was probably rebuilt by notebooks/3a (RESET_INDEX=True "
-            "writes this same name). Run `.venv/bin/python -m agent.index --reset`."
+            f"{INDEX_SCHEMA!r} — it was built by something else, or by an older notebook. "
+            f"{REBUILD_HINT}"
         )
     if col.count() != meta.get("chunk_count"):
         raise RuntimeError(
             f"collection holds {col.count()} chunks, fingerprint says {meta.get('chunk_count')} "
-            "— the index was modified after it was built. Rebuild it."
+            f"— the index was modified after it was built. {REBUILD_HINT}"
         )
     return col, meta
+
+
+def index_identity(col, meta: dict) -> tuple:
+    """The tuple that must not change under a running server.
+
+    Used for the per-request freshness check. Re-running the notebook deletes and recreates
+    the collection, which leaves a live server holding a handle to a segment that no longer
+    exists — it may error, or it may keep answering from the old index without saying so. A
+    finding recorded after a silent swap is evidence about a corpus that is no longer there.
+
+    The collection **id** is in here for a specific reason: rebuilding over an unchanged
+    corpus produces an identical schema, hash and count, so those three alone would not
+    notice the swap — but the handle is stale all the same, because delete+create always
+    mints a new UUID. Without the id, the one case that looks safest is the one that slips
+    through.
+    """
+    return (meta.get("schema"), meta.get("corpus_sha256"), col.count(), str(col.id))
 
 
 # --- query construction ----------------------------------------------------------------

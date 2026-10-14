@@ -44,9 +44,12 @@ CEILING_CHARS = 28_304
 # endpoint stubs usage.prompt_tokens to 0, so there is no direct measurement available.
 # Half, not all, so the proxy can be wrong by 2x and the chunk still fits.
 EMBED_TOKEN_CAP = 1024
-# Worst-case tokenizer density measured on this corpus (the markdown price table).
-# The average is 3.97; budgeting on the average would under-count the dense chunks.
-CHARS_PER_TOKEN_WORST = 2.65
+# Worst-case tokenizer density, re-measured over the full 21-chunk corpus: 2.51 (the
+# densest markdown table) to 5.35 chars/token. Budgeting on the average (3.97) would
+# under-count the dense chunks, so the floor is used, rounded down for margin.
+# Chunks do NOT use this -- they carry an exact measured n_tokens_chat from index time.
+# It is only for free-form text of unknown density: conversation history and the user turn.
+CHARS_PER_TOKEN_WORST = 2.5
 MAX_OUTPUT_TOKENS_RESERVE = 800  # matches the SPLX target's max_output_tokens
 TEMPLATE_HEADROOM = 192  # measured chat template ~15 tokens + per-message cost + slack
 
@@ -73,10 +76,11 @@ QUERY_INSTRUCTION = (
 )
 
 # --- index identity --------------------------------------------------------------------
-# Bumped so the guard can refuse a collection built by the Lab 3a notebook outright. Both
-# write the same collection name into the same store and the notebook defaults to
-# RESET_INDEX=True, so a notebook re-run would leave the server serving an 8-chunk,
-# procurement-only index. The server refuses to start on a schema mismatch.
+# The contract between the two halves of this lab. notebooks/3a.embed-index-canary.ipynb
+# writes this into the collection's metadata; agent/rag.py:open_collection() refuses to
+# serve a collection that does not carry it. Bump it whenever the fingerprint's shape or
+# the per-chunk metadata changes, so an index built by an older notebook is rejected
+# outright rather than served with fields the serving code expects and cannot find.
 INDEX_SCHEMA = "lab1-index-v2"
 
 # --- served model ids ------------------------------------------------------------------

@@ -16,7 +16,7 @@ The target has moved up a layer, and which layer is under test is the whole poin
 | Lab | Target | What a finding there means |
 |---|---|---|
 | 0 | **raw LM Studio** (`qwen3-0.6b`) on its OpenAI-compatible endpoint | a base-model weakness — there is no application to blame |
-| 3a | the **retrieval harness** only: embeddings + a Chroma index, no model in the loop | the index is sound, or it is not |
+| 3a | the **retrieval harness**: embeddings + the Chroma index, no generation. Also the **only writer** of the index Lab 1 serves | the index is sound, or it is not |
 | 1 | the **Acme HR RAG assistant** (`agent/`), served on `:8000` | an application weakness, with the retrieval trace on record |
 
 `agent/system-prompt.md` is the version-controlled copy of the system prompt, and from Lab 1 the
@@ -39,7 +39,10 @@ application parses it directly rather than mirroring it by hand.
 set -a && . ./.env && set +a                        # LM_API_TOKEN, APP_API_TOKEN
 curl -s localhost:1234/v1/models -H "Authorization: Bearer $LM_API_TOKEN" | head -c 200
 
-.venv/bin/python -m agent.index --reset             # build the index behind six gates
+# build the index: Restart Kernel and Run All Cells in
+#   notebooks/3a.embed-index-canary.ipynb   (eight gates; a green run is the verification)
+.venv/bin/jupyter lab notebooks/
+
 .venv/bin/uvicorn agent.server:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
