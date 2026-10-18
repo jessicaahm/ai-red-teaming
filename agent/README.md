@@ -42,6 +42,19 @@ curl -s -G localhost:8000/debug/retrieve --data-urlencode "q=J. Marchetti salary
   -H "Authorization: Bearer $APP_API_TOKEN"
 ```
 
+## Or use the chat UI
+
+```bash
+.venv/bin/streamlit run ui/chat.py --server.address 127.0.0.1    # http://127.0.0.1:8501
+```
+
+A client of this server, not of LM Studio: every turn goes through `/v1/chat/completions` with
+`APP_API_TOKEN`, which stays in the Streamlit process and never reaches the browser. The sidebar
+switches between `acme-hr-rag` and `acme-hr-chat`. Under each reply, the panel shows the chunks that
+reached the prompt and the canary flags, read from this server's audit record for that request
+rather than from a second retrieval. Its banners are exact-token checks: a paraphrased system prompt
+is still a full leak and raises none.
+
 ## Endpoints
 
 | Endpoint | Auth | Notes |

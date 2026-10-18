@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <title>How the Acme HR assistant answers a question</title>
+  <defs>
+    <marker id="ah-out" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#246cf7"/>
+    </marker>
+    <marker id="ah-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#001744"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="720" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="60" y="52" font-size="28" font-weight="700" fill="#001744">How the Acme HR assistant answers a question</text>
+  <text x="60" y="78" font-size="15" fill="#5c6b80">One user turn, left to right and back. Solid arrows go out, dashed arrows come back. Numbers are the order of events.</text>
+
+  <!-- participants -->
+  <g font-size="16" font-weight="700" text-anchor="middle">
+    <rect x="15" y="104" width="210" height="58" rx="8" fill="#e5f1fa" stroke="#001744" stroke-width="1.5"/>
+    <text x="120" y="128" fill="#001744">User</text>
+    <text x="120" y="149" font-size="12" font-weight="400" fill="#5c6b80">browser</text>
+
+    <rect x="275" y="104" width="210" height="58" rx="8" fill="#e5f1fa" stroke="#246cf7" stroke-width="1.5"/>
+    <text x="380" y="128" fill="#001744">Streamlit UI</text>
+    <text x="380" y="149" font-size="12" font-weight="400" fill="#5c6b80">ui/chat.py · :8501</text>
+
+    <rect x="535" y="104" width="210" height="58" rx="8" fill="#001744"/>
+    <text x="640" y="128" fill="#ffffff">AI Agent (REST API)</text>
+    <text x="640" y="149" font-size="12" font-weight="400" fill="#bcd4ff">FastAPI · agent/server.py · :8000</text>
+
+    <rect x="795" y="104" width="210" height="58" rx="8" fill="#246cf7"/>
+    <text x="900" y="128" fill="#ffffff">Embedding model</text>
+    <text x="900" y="149" font-size="12" font-weight="400" fill="#dbe8ff">qwen3-embedding-0.6b · LM Studio</text>
+
+    <rect x="1055" y="104" width="210" height="58" rx="8" fill="#246cf7"/>
+    <text x="1160" y="128" fill="#ffffff">Chat model</text>
+    <text x="1160" y="149" font-size="12" font-weight="400" fill="#dbe8ff">qwen3-0.6b · LM Studio :1234</text>
+  </g>
+
+  <!-- lifelines -->
+  <g stroke="#b7c3d4" stroke-width="1.5" stroke-dasharray="6 5">
+    <line x1="120" y1="162" x2="120" y2="590"/>
+    <line x1="380" y1="162" x2="380" y2="590"/>
+    <line x1="640" y1="162" x2="640" y2="590"/>
+    <line x1="900" y1="162" x2="900" y2="590"/>
+    <line x1="1160" y1="162" x2="1160" y2="590"/>
+  </g>
+
+  <!-- activation bars -->
+  <rect x="374" y="190" width="12" height="380" fill="#246cf7" opacity="0.18"/>
+  <rect x="634" y="240" width="12" height="280" fill="#001744" opacity="0.22"/>
+  <rect x="894" y="290" width="12" height="80" fill="#246cf7" opacity="0.28"/>
+  <rect x="1154" y="390" width="12" height="80" fill="#246cf7" opacity="0.28"/>
+
+  <!-- messages: label above the line, detail below -->
+  <g font-size="14" fill="#001744" text-anchor="middle">
+
+    <!-- 1 user -> ui -->
+    <line x1="126" y1="200" x2="368" y2="200" stroke="#246cf7" stroke-width="2" marker-end="url(#ah-out)"/>
+    <circle cx="140" cy="200" r="11" fill="#246cf7"/><text x="140" y="204.5" font-size="12" font-weight="700" fill="#fff">1</text>
+    <text x="256" y="193" font-weight="600">Question</text>
+    <text x="256" y="216" font-size="12" fill="#5c6b80">typed in the chat box</text>
+
+    <!-- 2 ui -> agent -->
+    <line x1="386" y1="250" x2="628" y2="250" stroke="#246cf7" stroke-width="2" marker-end="url(#ah-out)"/>
+    <circle cx="400" cy="250" r="11" fill="#246cf7"/><text x="400" y="254.5" font-size="12" font-weight="700" fill="#fff">2</text>
+    <text x="516" y="243" font-weight="600">POST /v1/chat/completions</text>
+    <text x="516" y="266" font-size="12" fill="#5c6b80">turn history + app token</text>
+
+    <!-- 3 agent -> embedding -->
+    <line x1="646" y1="300" x2="888" y2="300" stroke="#246cf7" stroke-width="2" marker-end="url(#ah-out)"/>
+    <circle cx="660" cy="300" r="11" fill="#246cf7"/><text x="660" y="304.5" font-size="12" font-weight="700" fill="#fff">3</text>
+    <text x="776" y="293" font-weight="600">Embed the query</text>
+    <text x="776" y="316" font-size="12" fill="#5c6b80">last 3 user turns, Instruct: prefix</text>
+
+    <!-- 4 embedding -> agent -->
+    <line x1="894" y1="350" x2="652" y2="350" stroke="#001744" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#ah-back)"/>
+    <circle cx="880" cy="350" r="11" fill="#001744"/><text x="880" y="354.5" font-size="12" font-weight="700" fill="#fff">4</text>
+    <text x="764" y="343" font-weight="600">1024-d vector</text>
+    <text x="764" y="366" font-size="12" fill="#5c6b80">agent searches Chroma: top-4 chunks</text>
+
+    <!-- 5 agent -> chat model -->
+    <line x1="646" y1="400" x2="1148" y2="400" stroke="#246cf7" stroke-width="2" marker-end="url(#ah-out)"/>
+    <circle cx="660" cy="400" r="11" fill="#246cf7"/><text x="660" y="404.5" font-size="12" font-weight="700" fill="#fff">5</text>
+    <text x="906" y="393" font-weight="600">Prompt</text>
+    <text x="906" y="416" font-size="12" fill="#5c6b80">system prompt + 4 chunks + history · temperature 0, seed 42</text>
+
+    <!-- 6 chat model -> agent -->
+    <line x1="1154" y1="450" x2="652" y2="450" stroke="#001744" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#ah-back)"/>
+    <circle cx="1140" cy="450" r="11" fill="#001744"/><text x="1140" y="454.5" font-size="12" font-weight="700" fill="#fff">6</text>
+    <text x="894" y="443" font-weight="600">Answer</text>
+    <text x="894" y="466" font-size="12" fill="#5c6b80">content + token usage · agent writes one log record</text>
+
+    <!-- 7 agent -> ui -->
+    <line x1="634" y1="500" x2="392" y2="500" stroke="#001744" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#ah-back)"/>
+    <circle cx="620" cy="500" r="11" fill="#001744"/><text x="620" y="504.5" font-size="12" font-weight="700" fill="#fff">7</text>
+    <text x="504" y="493" font-weight="600">200 JSON</text>
+    <text x="504" y="516" font-size="12" fill="#5c6b80">OpenAI-shaped · answer + request id</text>
+
+    <!-- 8 ui -> user -->
+    <line x1="374" y1="550" x2="132" y2="550" stroke="#001744" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#ah-back)"/>
+    <circle cx="360" cy="550" r="11" fill="#001744"/><text x="360" y="554.5" font-size="12" font-weight="700" fill="#fff">8</text>
+    <text x="244" y="543" font-weight="600">Answer shown</text>
+    <text x="244" y="566" font-size="12" fill="#5c6b80">with the source chunks it used</text>
+  </g>
+
+  <!-- footnote -->
+  <rect x="60" y="610" width="1160" height="70" rx="8" fill="#e5f1fa"/>
+  <text x="80" y="637" font-size="13" fill="#001744" font-weight="700">What stays inside the agent</text>
+  <text x="80" y="658" font-size="13" fill="#001744">The app token, the LM Studio token, the system prompt and the Chroma index never reach the browser. Between 4 and 5 the agent searches the index with the vector and builds the prompt;</text>
+  <text x="80" y="675" font-size="13" fill="#001744">the two models only ever see text. acme-hr-chat is the same path with steps 3 and 4 skipped.</text>
+</svg>
