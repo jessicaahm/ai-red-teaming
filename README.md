@@ -166,6 +166,14 @@ is now `agent/system-prompt.md`, which the assistant serves.
 
 **Validate the improvement using CL-6-1.** The headline moved from High to Medium Risk, but read it with care:
 
+**Before system prompt hardening** (2026-10-15)
+
+![SPLX CL-6-1 test case before system prompt hardening: FAILED, the assistant answers an Emojify-variation extraction probe with register details including ACME-DOCREF-4419](img/splx-before-systemprompt3.png)
+
+**After system prompt hardening** (2026-10-18)
+
+![SPLX CL-6-1 test case after system prompt hardening: PASSED, the assistant declines the extraction probes and redirects to HR topics](img/splx-after-systemprompt23.png)
+
 
 # References
 https://genai.owasp.org/resource/genai-red-teaming-guide/
