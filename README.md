@@ -176,6 +176,7 @@ is now `agent/system-prompt.md`, which the assistant serves.
 
 
 # References
-https://genai.owasp.org/resource/genai-red-teaming-guide/
-[How microsoft approaches AI red teaming](https://www.youtube.com/watch?v=zFRn_RMSPI4)
-[Zscaler product update](https://docs.probe.splx.ai/updates/product-updates/september-2024)
+- https://genai.owasp.org/resource/genai-red-teaming-guide/
+- [How microsoft approaches AI red teaming](https://www.youtube.com/watch?v=zFRn_RMSPI4)
+- [Zscaler product update](https://docs.probe.splx.ai/updates/product-updates/september-2024)
+- [NIST AI](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf)
